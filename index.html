@@ -1,436 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+  <title>Supabase Test</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Planner | Collaborative Edition</title>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-   
-    <style>
-        :root {
-            --bg-body: #f5f2ed; /* Soft Beige */
-            --bg-card: #ffffff;
-            --text-main: #3d3b44;
-            --text-muted: #7c7a85;
-            --accent: #9389bd; /* Lavender */
-            --accent-hover: #b5adc9;
-            --accent-blue: #7ca1cc; /* Soft Blue */
-            --accent-glow: rgba(147, 137, 189, 0.2);
-            --accent-light: #efebf7;
-            --border-color: #e2dfd9;
-            --radius: 16px;
-            --transition: all 0.3s ease;
-        }
-
-        [data-theme="dark"] {
-            --bg-body: #1c1b1d;
-            --bg-card: #262429;
-            --text-main: #e6e4eb;
-            --text-muted: #9e9ca6;
-            --accent: #b5adc9;
-            --accent-blue: #8eb1d9;
-            --accent-light: #34313b;
-            --border-color: #3d3a42;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            transition: background-color 0.3s ease;
-            padding-bottom: 40px;
-        }
-
-        .container {
-            max-width: 1250px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 10px 0;
-        }
-
-        .logo-section h1 {
-            font-size: 1.6rem;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            letter-spacing: -0.5px;
-            font-weight: 800;
-        }
-
-        .logo-section span {
-            color: var(--accent);
-        }
-
-        /* --- Profile Section --- */
-        .profile-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 25px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .profile-avatar {
-            width: 64px;
-            height: 64px;
-            background: var(--accent-light);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--accent);
-            margin-bottom: 12px;
-            border: 2px solid var(--accent);
-        }
-
-        .profile-name {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 4px;
-        }
-
-        .profile-id {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            font-family: monospace;
-            background: var(--bg-body);
-            padding: 4px 8px;
-            border-radius: 4px;
-            word-break: break-all;
-        }
-
-        /* --- Layout --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 25px;
-        }
-
-        @media (max-width: 1100px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-        }
-
-        /* --- Cards & Buttons --- */
-        .card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            margin-bottom: 25px;
-            border: 1px solid var(--border-color);
-            transition: var(--transition);
-        }
-
-        .card:hover { border-color: var(--accent-hover); }
-
-        .card-title {
-            font-size: 0.8rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        button {
-            cursor: pointer;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-            padding: 12px 20px;
-            width: 100%;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-        }
-
-        .btn-icon:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        /* --- Forms --- */
-        .task-form {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        input, select, textarea {
-            background: var(--bg-body);
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            border-radius: 10px;
-            color: var(--text-main);
-            outline: none;
-            width: 100%;
-            resize: none;
-        }
-
-        input:focus, select:focus, textarea:focus { border-color: var(--accent-blue); }
-
-        /* --- Table Styles --- */
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            text-align: left;
-            padding: 12px;
-            color: var(--text-muted);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        td {
-            padding: 16px 12px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem;
-        }
-
-        .task-row:hover {
-            background: var(--accent-light);
-        }
-
-        /* --- Reminders --- */
-        .reminder-input-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .reminder-item {
-            font-size: 0.8rem;
-            padding: 10px;
-            background: var(--bg-body);
-            border-radius: 8px;
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-left: 3px solid var(--accent-blue);
-        }
-
-        .reminder-content {
-            flex: 1;
-            padding-right: 8px;
-        }
-
-        .reminder-time {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-            display: block;
-        }
-
-        .user-list-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px;
-            border-radius: 8px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent-blue);
-        }
-
-        .badge {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            border-radius: 6px;
-            background: var(--accent-light);
-            color: var(--accent);
-            font-weight: 700;
-        }
-
-        .file-link {
-            color: var(--accent-blue);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: 700;
-        }
-
-        /* --- Notepad Styles --- */
-        .notepad-area {
-            min-height: 150px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            background: #fffdf5; /* Paper-like tint */
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-            width: 100%;
-        }
-
-        .notepad-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
-
-        /* --- Custom Notification Box --- */
-        #notification-center {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-width: 300px;
-        }
-
-        .toast {
-            background: var(--accent);
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        #loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-body);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .loader {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border-color);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-    </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="loader"></div>
-        <p style="margin-top: 15px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Nexus Syncing...</p>
-    </div>
+<h2>Login</h2>
 
-    <div id="notification-center"></div>
+<input type="email" id="email" placeholder="Email"><br><br>
+<input type="password" id="password" placeholder="Password"><br><br>
+<button onclick="login()">Login</button>
 
-    <div class="container">
-        <header>
-            <div class="logo-section">
-                <h1><i data-lucide="shield" style="color: var(--accent)"></i> NEXUS<span>PLANNER</span></h1>
-            </div>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <button class="btn-icon" id="theme-toggle" title="Toggle Theme"><i data-lucide="moon"></i></button>
-            </div>
-        </header>
+<hr>
 
-        <div class="dashboard-grid">
-            <!-- Left Sidebar -->
-            <aside>
-                <div class="profile-card" id="user-profile">
-                    <div class="profile-avatar">
-                        <i data-lucide="user" size="32"></i>
-                    </div>
-                    <div class="profile-name" id="display-name">Guest User</div>
-                    <div class="profile-id" id="display-uid">----------------</div>
-                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #10b981; font-weight: 700;">
-                        <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span>
-                        ONLINE
-                    </div>
-                </div>
+<div id="dashboard" style="display:none;">
+  <h2>Dashboard</h2>
+  <p>Task Count: <span id="count">0</span></p>
+  <button onclick="logout()">Logout</button>
+</div>
 
-                <!-- Shared Notepad Section -->
-                <div class="card" style="padding: 18px;">
-                    <div class="card-title"><i data-lucide="edit-3" size="16"></i> Nexus Common</div>
-                    <textarea id="public-notepad" class="notepad-area" placeholder="Share a thought with the nexus..."></textarea>
-                    <div class="notepad-footer">
-                        <span id="notepad-status">Synced</span>
-                        <span id="notepad-user">Nobody editing</span>
-                    </div>
-                </div>
+<script>
+  const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+  const SUPABASE_ANON_KEY = "PASTE_YOUR_PUBLIC_ANON_KEY_HERE";
 
-                <!-- Reminder Section -->
-                <div class="card" style="padding: 18px;">
-                    <div class="card-title"><i data-lucide="bell" size="16"></i> My Reminders</div>
-                    <div class="reminder-input-container">
-                        <input type="text" id="reminder-text" placeholder="What needs doing?" style="padding: 10px; font-size: 0.8rem; margin-bottom: 4px;">
-                        <div style="display: flex; gap: 4px;">
-                            <input type="datetime-local" id="reminder-datetime" style="padding: 8px; font-size: 0.75rem; flex: 1;">
-                            <button id="add-reminder" class="btn-primary" style="padding: 0 12px; width: auto;"><i data-lucide="plus" size="16"></i></button>
-                        </div>
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      alert(error.message);
+    }
+  }
+
+  async function logout() {
+    await supabaseClient.auth.signOut();
+  }
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+
+    if (session) {
+      document.getElementById("dashboard").style.display = "block";
+      loadTasks(session.user.id);
+    } else {
+      document.getElementById("dashboard").style.display = "none";
+    }
+
+  });
+
+  async function loadTasks(userId) {
+
+    const { count } = await supabaseClient
+      .from("tasks")
+      .select("*", { count: "exact" })
+      .eq("user_id", userId);
+
+    document.getElementById("count").textContent = count || 0;
+  }
+
+</script>
+
+</body>
+</html>                        </div>
                     </div>
                     <div id="reminders-list"></div>
                 </div>
@@ -505,4 +147,5 @@
 
 
 </body>
+
 </html>
