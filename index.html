@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nexus Planner | Powered by Supabase</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-body: #fdfcfb;
+            --bg-card: #ffffff;
+            --text-main: #2d2a32;
+            --text-muted: #6b7280;
+            --accent: #9389bd;
+            --accent-light: #f3f0ff;
+            --border-color: #f3f4f6;
+            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #c4b5fd;
+            --border-color: #334155;
+            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; }
+
+        .page-view { display: none; min-height: 100vh; }
+        .page-view.active { display: block; }
+
+        /* --- Animations --- */
+        .fade-in { 
+            opacity: 0; 
+            transform: translateY(20px); 
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out; 
+        }
+        .fade-in.visible { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+
+        header.main-header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+        .logo span { color: var(--accent); }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-ghost { background: transparent; color: var(--text-muted); }
+
+        /* --- Parallax Section --- */
+        .parallax-container {
+            position: relative;
+            height: 300px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .parallax-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 120%;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            z-index: -1;
+            filter: brightness(0.6);
+            background-attachment: fixed;
+        }
+
+        @media (max-width: 768px) {
+            .parallax-bg { background-attachment: scroll; }
+        }
+
+        .parallax-content {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            z-index: 1;
+        }
+
+        /* --- Dashboard Specific --- */
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card h4 { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-card p { font-size: 1.5rem; font-weight: 700; }
+
+        /* --- Auth Wrapper --- */
+        .auth-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .auth-card {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 400px;
+            padding: 32px 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .form-group { margin-bottom: 16px; }
+
+        .theme-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 8px; display: none; }
+
+        /* --- Features Grid --- */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 32px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .icon-box {
+            width: 56px;
+            height: 56px;
+            background: var(--accent-light);
+            color: var(--accent);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-content">
+            <a href="javascript:void(0)" onclick="switchView('view-landing')" class="logo">
+                <i data-lucide="shield-check"></i> NEXUS<span>PLANNER</span>
+            </a>
+            <div id="user-display" style="display: none; align-items: center; gap: 12px;">
+                <span id="user-email" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+                <button onclick="handleLogout()" class="btn btn-ghost" style="padding: 8px;"><i data-lucide="log-out"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 🏠 LANDING PAGE -->
+    <div id="view-landing" class="page-view active">
+        <section style="text-align: center; padding: 100px 20px;" class="fade-in visible">
+            <h1 style="font-size: 3.5rem; margin-bottom: 20px; line-height: 1.1;">Your Workspace. <br><span style="color: var(--accent);">Cloud Powered.</span></h1>
+            <p style="color: var(--text-muted); margin-bottom: 40px; font-size: 1.2rem;">Welcome back to your academic command center. Sign in to continue.</p>
+            <div style="display: flex; gap: 16px; justify-content: center;">
+                <button onclick="switchView('view-login')" class="btn btn-primary" style="padding: 14px 32px;">Sign In to Dashboard</button>
+            </div>
+        </section>
+
+        <div class="parallax-container fade-in">
+            <div class="parallax-bg" style="background-image: url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=1000&auto=format&fit=crop');"></div>
+            <div class="parallax-content">
+                <h2 style="font-size: 2.5rem;">Deep Focus</h2>
+                <p>Designed for distraction-free study sessions.</p>
+            </div>
+        </div>
+
+        <section class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="icon-box"><i data-lucide="zap"></i></div>
+                <h3>Real-time Sync</h3>
+                <p>Data updates instantly across all your logged-in devices.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="icon-box"><i data-lucide="lock"></i></div>
+                <h3>Secure Auth</h3>
+                <p>Your data is protected by Supabase's world-class security.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="icon-box"><i data-lucide="layout"></i></div>
+                <h3>Clean UI</h3>
+                <p>Focus on what matters most without the clutter.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- 🔑 LOGIN VIEW (ONLY) -->
+    <div id="view-login" class="page-view">
+        <div class="auth-wrapper">
+            <div class="auth-card fade-in visible">
+                <h2>Welcome Back</h2>
+                <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.9rem;">Please enter your credentials to access your planner.</p>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="login-email" placeholder="email@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Sign In</button>
+                    <p id="login-error" class="error-msg"></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 DASHBOARD (Protected) -->
+    <div id="view-dashboard" class="page-view">
+        <div class="dashboard-container">
+            <h2 style="margin-bottom: 24px;" class="fade-in visible">Your Dashboard</h2>
+            <div class="stats-grid">
+                <div class="stat-card fade-in">
+                    <h4>Active Tasks</h4>
+                    <p id="task-count">0</p>
+                </div>
+                <div class="stat-card fade-in">
+                    <h4>Upcoming Exams</h4>
+                    <p>3</p>
+                </div>
+                <div class="stat-card fade-in">
+                    <h4>GPA Progress</h4>
+                    <p>3.8</p>
+                </div>
+            </div>
+            <div class="fade-in" style="background: var(--bg-card); padding: 30px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                <h3>Supabase Real-time Test</h3>
+                <p style="color: var(--text-muted); margin-top: 8px;">Update your 'tasks' table in Supabase to see changes here instantly.</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="theme-toggle-btn" id="theme-toggle"><i data-lucide="moon"></i></button>
+
+    <script>
+        // --- Supabase Config ---
+        const SUPABASE_URL = 'https://cyasrzixhiysznsbssgm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5YXNyeml4aGl5c3puc2Jzc2dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5NzQyODAsImV4cCI6MjA4NjU1MDI4MH0.l351mEgutamqauI8hb1qDsaRbpecv2Pd14noR4HpZyU';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        lucide.createIcons();
+
+        // --- Intersection Observer for Animations ---
+        let observer;
+        function initAnimations() {
+            if (observer) observer.disconnect();
+            observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        }
+
+     window.switchView = async (viewId) => {
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (viewId === 'view-dashboard' && !session) {
+        viewId = 'view-login';
+    }
+
+    document.querySelectorAll('.page-view').forEach(v => 
+        v.classList.remove('active')
+    );
+
+    const view = document.getElementById(viewId);
+    if (view) {
+        view.classList.add('active');
+        initAnimations();
+    }
+
+    window.scrollTo(0,0);
+};
+
+        // --- Auth Handlers ---
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    errorEl.textContent = error.message;
+    errorEl.style.display = 'block';
+} else {
+    window.location.href = "dashboard.html";
+}
+        });
+
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+        }
+
+        (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        document.getElementById('user-display').style.display = 'flex';
+        document.getElementById('user-email').textContent = session.user.email;
+        switchView('view-dashboard');
+        loadData(session.user.id);
+    }
+})();
+
+        // --- Auth State Observer ---
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            const userDisplay = document.getElementById('user-display');
+            const userEmail = document.getElementById('user-email');
+
+            if (session) {
+                userDisplay.style.display = 'flex';
+                userEmail.textContent = session.user.email;
+                switchView('view-dashboard');
+                loadData(session.user.id);
+            } else {
+                userDisplay.style.display = 'none';
+                switchView('view-landing');
+            }
+            lucide.createIcons();
+        });
+
+        // --- Data Loading ---
+        async function loadData(userId) {
+            const { data, count } = await supabaseClient
+                .from('tasks')
+                .select('*', { count: 'exact' })
+                .eq('user_id', userId);
+
+                supabaseClient
+  .channel('tasks-changes')
+  .on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'tasks' },
+    () => loadData(userId)
+  )
+  .subscribe();
+            
+            if (data) {
+                const countEl = document.getElementById('task-count');
+                if (countEl) countEl.textContent = count || 0;
+            }
+        }
+
+        // --- Theme Toggle ---
+        const themeBtn = document.getElementById('theme-toggle');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                const isDark = html.getAttribute('data-theme') === 'dark';
+                html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+                themeBtn.innerHTML = `<i data-lucide="${isDark ? 'moon' : 'sun'}"></i>`;
+                lucide.createIcons();
+            });
+        }
+
+        // Initialize on load
+        window.onload = initAnimations;
+    </script>
+</body>
+</html>
