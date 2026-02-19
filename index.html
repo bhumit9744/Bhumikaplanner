@@ -319,30 +319,7 @@
         </div>
     </div>
 
-    <!-- 📊 DASHBOARD (Protected) -->
-    <div id="view-dashboard" class="page-view">
-        <div class="dashboard-container">
-            <h2 style="margin-bottom: 24px;" class="fade-in visible">Your Dashboard</h2>
-            <div class="stats-grid">
-                <div class="stat-card fade-in">
-                    <h4>Active Tasks</h4>
-                    <p id="task-count">0</p>
-                </div>
-                <div class="stat-card fade-in">
-                    <h4>Upcoming Exams</h4>
-                    <p>3</p>
-                </div>
-                <div class="stat-card fade-in">
-                    <h4>GPA Progress</h4>
-                    <p>3.8</p>
-                </div>
-            </div>
-            <div class="fade-in" style="background: var(--bg-card); padding: 30px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-                <h3>Supabase Real-time Test</h3>
-                <p style="color: var(--text-muted); margin-top: 8px;">Update your 'tasks' table in Supabase to see changes here instantly.</p>
-            </div>
-        </div>
-    </div>
+    
 
     <button class="theme-toggle-btn" id="theme-toggle"><i data-lucide="moon"></i></button>
 
@@ -410,15 +387,7 @@
             await supabaseClient.auth.signOut();
         }
 
-        (async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        document.getElementById('user-display').style.display = 'flex';
-        document.getElementById('user-email').textContent = session.user.email;
-        switchView('view-dashboard');
-        loadData(session.user.id);
-    }
-})();
+     
 
         // --- Auth State Observer ---
         supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -428,8 +397,7 @@
             if (session) {
                 userDisplay.style.display = 'flex';
                 userEmail.textContent = session.user.email;
-                switchView('view-dashboard');
-                loadData(session.user.id);
+                
             } else {
                 userDisplay.style.display = 'none';
                 switchView('view-landing');
