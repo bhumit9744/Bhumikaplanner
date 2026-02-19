@@ -107,6 +107,8 @@
 
         /* --- Profile Section --- */
         .profile-card {
+
+            
             background: var(--bg-card);
             border-radius: var(--radius);
             padding: 20px;
@@ -421,6 +423,29 @@
             <aside>
                 <div class="profile-card" id="user-profile">
                     <div class="profile-avatar">
+    <img id="profile-img" src="default-avatar.png"
+         style="width:64px;height:64px;border-radius:50%;object-fit:cover;">
+</div>
+
+<input type="file" id="avatar-upload" accept="image/*"
+       style="font-size:0.7rem;margin-bottom:8px;">
+
+<input type="text" id="profile-fullname"
+       placeholder="Full Name"
+       style="font-size:0.8rem;margin-bottom:6px;">
+
+<textarea id="profile-bio"
+          placeholder="Short Bio"
+          style="font-size:0.75rem;margin-bottom:8px;"></textarea>
+
+<button id="save-profile" class="btn-primary"
+        style="padding:8px;font-size:0.8rem;">
+    Save Profile
+</button>
+
+<div class="profile-name" id="display-name">Guest</div>
+<div class="profile-id" id="display-uid">Loading ID...</div>
+                    <div class="profile-avatar">
                         <i data-lucide="user" size="32"></i>
                     </div>
                     <div class="profile-name" id="display-name">Guest</div>
@@ -475,6 +500,8 @@
                             <input type="date" id="m-date" required>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 10px;">
+                            <input type="text" id="m-tag"
+       placeholder="Tag user (optional)">
                             <select id="m-category" required>
                                 <option value="" disabled>Format</option>
                                 <option value="Assignment" selected>Assignment</option>
@@ -531,6 +558,19 @@ const SUPABASE_URL = "https://cyasrzixhiysznsbssgm.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5YXNyeml4aGl5c3puc2Jzc2dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5NzQyODAsImV4cCI6MjA4NjU1MDI4MH0.l351mEgutamqauI8hb1qDsaRbpecv2Pd14noR4HpZyU";
 
 
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
+function sendNotification(title, message) {
+    if (Notification.permission === "granted") {
+        new Notification(title, {
+            body: message
+        });
+    }
+}
+
+
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
@@ -554,6 +594,7 @@ async function protectPage() {
 
     loadMissions();
     loadReminders();
+    loadProfile();
 }
 
 
@@ -612,7 +653,10 @@ async function loadMissions() {
         }
 
         row.innerHTML = `
-            <td>${task.name}</td>
+            <td>
+    ${task.name}
+    ${task.tag ? `<span class="badge">@${task.tag}</span>` : ""}
+</td>
             <td>${task.subject}</td>
             <td>${task.date}</td>
             <td>${task.category}</td>
@@ -664,14 +708,15 @@ document.getElementById('shared-task-form')
         finalFileUrl = externalUrl;
     }
 
-    await supabaseClient.from('shared_missions').insert({
-        name: document.getElementById('m-name').value,
-        subject: document.getElementById('m-subject').value,
-        date: document.getElementById('m-date').value,
-        category: document.getElementById('m-category').value,
-        fileurl: finalFileUrl,
-        author: currentUser.id
-    });
+  await supabaseClient.from('shared_missions').insert({
+    name: document.getElementById('m-name').value,
+    subject: document.getElementById('m-subject').value,
+    date: document.getElementById('m-date').value,
+    category: document.getElementById('m-category').value,
+    fileurl: finalFileUrl,
+    tag: document.getElementById('m-tag').value,
+    author: currentUser.id
+});
 
     e.target.reset();
     loadMissions();
@@ -750,6 +795,61 @@ async function logout() {
     await supabaseClient.auth.signOut();
     window.location.href = "index.html";
 }
+
+/* 👤 Load Profile */
+async function loadProfile() {
+    const { data } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+    if (data) {
+        document.getElementById('profile-fullname').value = data.full_name || "";
+        document.getElementById('profile-bio').value = data.bio || "";
+        if (data.avatar_url) {
+            document.getElementById('profile-img').src = data.avatar_url;
+        }
+    }
+}
+
+/* 💾 Save Profile */
+document.getElementById('save-profile')
+.addEventListener('click', async () => {
+
+    await supabaseClient.from('profiles').upsert({
+        id: currentUser.id,
+        full_name: document.getElementById('profile-fullname').value,
+        bio: document.getElementById('profile-bio').value
+    });
+
+    alert("Profile Updated");
+});
+
+/* 📸 Upload Avatar */
+document.getElementById('avatar-upload')
+.addEventListener('change', async (e) => {
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fileName = currentUser.id + ".png";
+
+    await supabaseClient.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+    const { data } = supabaseClient.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+    document.getElementById('profile-img').src = data.publicUrl;
+
+    await supabaseClient.from('profiles').upsert({
+        id: currentUser.id,
+        avatar_url: data.publicUrl
+    });
+});
 
 protectPage();
 </script>
